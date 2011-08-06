@@ -13,20 +13,20 @@ COUNT_PROC = os.sysconf('SC_NPROCESSORS_ONLN')
 
 def readCpuData(number, fileName):
 	args = {}
-	args["procnumb"] = number
-	args["filename"] = fileName
+	args["procnumb"] = QString(number)
+	args["filename"] = QString(fileName)
 
 	act = KAuth.Action('org.freedesktop.auth.cpufrequtility.read')
 	act.setHelperID('org.freedesktop.auth.cpufrequtility')
 	act.setArguments(args)
-	print act.hasHelper(), 'ready', act.helperID()
-	#act.arguments()["procnumb"] = number
-	#act.arguments()["filename"] = fileName
+	#print act.hasHelper(), 'ready', act.helperID(), act.name(), 'Valid is', act.isValid()
 	reply = act.execute()
 	if (reply.failed()) :
-		QMessageBox.information(None, "Error", QString("KAuth returned an error code: %1").arg(reply.errorCode()))
+		QMessageBox.information(None, "Error", \
+					QString("KAuth returned an error code: %1 \n %2").arg(reply.errorCode()).arg(reply.errorDescription()))
 	else :
-		print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
+		#print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
+		pass
 	return reply
 
 def writeCpuData(number, fileName, parametr):
@@ -40,9 +40,11 @@ def writeCpuData(number, fileName, parametr):
 	act.setArguments(args)
 	reply = act.execute()
 	if (reply.failed()) :
-		QMessageBox.information(None, "Error", QString("KAuth returned an error code: %1").arg(reply.errorCode()))
+		QMessageBox.information(None, "Error", \
+					QString("KAuth returned an error code: %1 \n %2").arg(reply.errorCode()).arg(reply.errorDescription()))
 	else :
-		print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
+		#print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
+		pass
 	return reply
 
 """
@@ -64,12 +66,17 @@ def define_proc_data():
 	procData = {}
 	procData['count'] = COUNT_PROC
 	procData['availableFreqs'] = {i : readCpuData(str(i), 'available_frequencies') for i in xrange(COUNT_PROC)}
-	print [procData['availableFreqs'][i].data() for i in xrange(COUNT_PROC)]
-	procData['availableGovernors'] = {}
-	procData['currentFreq'] = {}
-	procData['currentGovernor'] = {}
-	procData['currentMaxFreq'] = {}
-	procData['currentMinFreq'] = {}
+	print [procData['availableFreqs'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	procData['availableGovernors'] = {i : readCpuData(str(i), 'available_governors') for i in xrange(COUNT_PROC)}
+	print [procData['availableGovernors'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	procData['currentFreq'] = {i : readCpuData(str(i), 'cur_freq') for i in xrange(COUNT_PROC)}
+	print [procData['currentFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	procData['currentGovernor'] = {i : readCpuData(str(i), 'governor') for i in xrange(COUNT_PROC)}
+	print [procData['currentGovernor'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	procData['currentMaxFreq'] = {i : readCpuData(str(i), 'max_freq') for i in xrange(COUNT_PROC)}
+	print [procData['currentMaxFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	procData['currentMinFreq'] = {i : readCpuData(str(i), 'min_freq') for i in xrange(COUNT_PROC)}
+	print [procData['currentMinFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	return procData
 
 class plasmaCpuFreqUtility(plasmascript.Applet):
@@ -153,29 +160,6 @@ class ControlWidget(Plasma.Dialog):
 			QMessageBox.information(self, "Error", QString("KAuth returned an error code: %1").arg(reply.errorCode()))
 		else :
 			print reply.data(), 'reply'
-
-class RegimeChange():
-	def __init__(self, parent = None):
-		pass
-
-	def modechange(self, args):
-		reply = KAuth.ActionReply()
-		Data = QStringList()
-		Data.append('echo')
-		Data.append(args['key'])
-		Data.append('>')
-		Data.append('/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor')
-		self.proc = QProcess()
-		start, pid = self.proc.startDetached('/usr/bin/pkexec', Data, os.getcwd())
-		reply.setData({'pid' : pid, 'start' :start})
-		return reply
-
-	def define_proc_data(self, args):
-		reply = KAuth.ActionReply()
-		with open('/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor', 'rb') as f :
-			mode = f.read()
-		reply.setData({'mode' : mode})
-		return reply
 
 def CreateApplet(parent):
 	return plasmaCpuFreqUtility(parent)
