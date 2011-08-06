@@ -17,14 +17,16 @@ def readCpuData(number, fileName):
 	args["filename"] = fileName
 
 	act = KAuth.Action('org.freedesktop.auth.cpufrequtility.read')
+	act.setHelperID('org.freedesktop.auth.cpufrequtility')
 	act.setArguments(args)
+	print act.hasHelper(), 'ready', act.helperID()
 	#act.arguments()["procnumb"] = number
 	#act.arguments()["filename"] = fileName
 	reply = act.execute()
 	if (reply.failed()) :
 		QMessageBox.information(None, "Error", QString("KAuth returned an error code: %1").arg(reply.errorCode()))
 	else :
-		print reply.data(), 'reply'
+		print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
 	return reply
 
 def writeCpuData(number, fileName, parametr):
@@ -34,12 +36,13 @@ def writeCpuData(number, fileName, parametr):
 	args["parametr"] = parametr
 
 	act = KAuth.Action('org.freedesktop.auth.cpufrequtility.write')
+	act.setHelperID('org.freedesktop.auth.cpufrequtility')
 	act.setArguments(args)
 	reply = act.execute()
 	if (reply.failed()) :
 		QMessageBox.information(None, "Error", QString("KAuth returned an error code: %1").arg(reply.errorCode()))
 	else :
-		print reply.data(), 'reply'
+		print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
 	return reply
 
 """
@@ -115,7 +118,6 @@ class ControlWidget(Plasma.Dialog):
 		self.comboMenu.addUrl(KIcon('../icons/ondemand.png'), KUrl('OnDemand'))
 		self.comboMenu.addUrl(KIcon('../icons/ondemand.png'), KUrl('Conservative'))
 		self.comboMenu.addUrl(KIcon('../icons/powersave.png'), KUrl('PowerSave'))
-		""" написать функцию определения текущего режима процессора """
 		self.comboMenu.setCurrentItem('OnDemand')
 		self.comboMenu.setEditable(False)
 		self.comboMenu.currentIndexChanged['const QString&'].connect(self.regimeDefined)
@@ -142,7 +144,7 @@ class ControlWidget(Plasma.Dialog):
 		args['key'] = key
 		act = KAuth.Action()
 
-		act.setName('modechange')
+		act.setName('org.freedesktop.auth.cpufrequtility.write')
 		act.setHelperID('org.freedesktop.auth.cpufrequtility')
 		act.setArguments(args)
 		print act.status()
