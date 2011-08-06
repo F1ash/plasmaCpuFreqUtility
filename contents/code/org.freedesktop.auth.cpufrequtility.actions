@@ -1,0 +1,11 @@
+[org.freedesktop.auth.cpufrequtility.read]
+Name=Read CPUFreqHelper
+Description=User CpuFreqUtility
+Policy=yes
+Persistence=session
+
+[org.freedesktop.auth.cpufrequtility.write]
+Name=Write CPUFreqHelper
+Description=User CpuFreqUtility
+Policy=yes
+Persistence=session
