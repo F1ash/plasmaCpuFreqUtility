@@ -97,12 +97,11 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		plasmascript.Applet.__init__(self, parent)
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
-		#self.iconPath = os.path.join(self.kdehome, '/share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/icon.svg')
-		self.iconPath = '../icons/icon.svg'
+		self.iconPath = self.kdehome + 'share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/icon.svg'
+		
 		self.icon = Plasma.IconWidget()
 		self.icon.setIcon(self.iconPath)
 		self.icon.clicked.connect(self.mouseDoubleClickEvent)
-		#if not os.path.isfile(os.path.expanduser('~/.actions')) : createActions()
 		self.ProcData = define_proc_data()
 
 	def init(self):
@@ -138,6 +137,7 @@ class ControlWidget(Plasma.Dialog):
 		Plasma.Dialog.__init__(self, parent)
 		self.prnt = obj
 		self.ProcData = procData
+		self.kdehome = unicode(KGlobal.dirs().localkdedir())
 
 		self.accept = QPushButton()
 		self.accept.setText('Apply')
@@ -188,11 +188,16 @@ class ControlWidget(Plasma.Dialog):
 			availableGovernors = _availableGovernors.split(' ')
 			count = availableGovernors.count('')
 			if count > 0 : availableGovernors.removeAll('')
-			availableGovernors.append('conservative')
 			availableGovernors.append('powersave')
+			availableGovernors.append('conservative')
 			availableGovernors.removeDuplicates()
 			for governor in availableGovernors :
-				self.comboGovernorMenu[i].addItem(QIcon('../icons/' + governor + '.png'), governor)
+				iconPath = self.kdehome + 'share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/'
+				if os.path.isfile(iconPath + governor + '.png') :
+					path_ = iconPath + governor + '.png'
+				else :
+					path_ = iconPath + 'conservative.png'
+				self.comboGovernorMenu[i].addItem(QIcon(), governor)
 			currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
 			currGovernorIdx = availableGovernors.indexOf(currentGovernor)
 			#print [currentGovernor], currGovernorIdx, [item for item in availableGovernors]

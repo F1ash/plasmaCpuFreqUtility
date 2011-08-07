@@ -1,2 +1,9 @@
 # LANG=en_US.UTF-8
 
+Simple plasmoid for change frequencies of processors, enabling or disabling them.
+Plasmoid needs polkit-1, d-bus.
+May need to configure SELinux.
+
+Dependencies:
+	PyQt4
+	PyKDE4
