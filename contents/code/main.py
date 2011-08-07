@@ -188,6 +188,9 @@ class ControlWidget(Plasma.Dialog):
 			availableGovernors = _availableGovernors.split(' ')
 			count = availableGovernors.count('')
 			if count > 0 : availableGovernors.removeAll('')
+			availableGovernors.append('conservative')
+			availableGovernors.append('powersave')
+			availableGovernors.removeDuplicates()
 			for governor in availableGovernors :
 				self.comboGovernorMenu[i].addItem(QIcon('../icons/' + governor + '.png'), governor)
 			currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
@@ -252,7 +255,7 @@ class ControlWidget(Plasma.Dialog):
 		for i in xrange(COUNT_PROC) :
 			""" WARNING : /sys/devices/system/cpu/cpu0/online not exist anyway """
 			if i != 0 :
-				print i, 'online', newParameters[i]['enable']
+				#print i, 'online', newParameters[i]['enable']
 				writeCpuData(i, 'online', newParameters[i]['enable'])
 				""" continue -- because files for this proc not exists already """
 				if newParameters[i]['enable'] == 0 : continue
