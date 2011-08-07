@@ -196,7 +196,7 @@ class ControlWidget(Plasma.Dialog):
 				if os.path.isfile(iconPath + governor + '.png') :
 					path_ = iconPath + governor + '.png'
 				else :
-					path_ = iconPath + 'conservative.png'
+					path_ = iconPath + 'ondemand.png'
 				self.comboGovernorMenu[i].addItem(QIcon(), governor)
 			currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
 			currGovernorIdx = availableGovernors.indexOf(currentGovernor)

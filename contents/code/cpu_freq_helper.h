@@ -1,7 +1,5 @@
 #include <kauth.h>
 using namespace KAuth;
-#include <iostream>
-#include <QtGui>
 
 class CPUFreqHelper : public QObject
 {
