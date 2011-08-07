@@ -1,3 +1,6 @@
+if (NOT CMAKE_INSTALL_PREFIX) 
+ set (CMAKE_INSTALL_PREFIX /usr/local) 
+endif ()
 project (cpu_freq_helper)
 find_package(KDE4 REQUIRED)
 include (KDE4Defaults)

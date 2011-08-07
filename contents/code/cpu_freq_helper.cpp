@@ -6,24 +6,43 @@
 CPUFreqHelper::CPUFreqHelper(QObject *parent) : QObject(parent) {
 }
 
+QString CPUFreqHelper::get_key_varmap(const QVariantMap &args, const QString& key)
+{
+	QString value;
+	if (args.keys().contains(key)) {
+		value = args[key].toString();
+	}
+	else {
+		value = QString();
+	};
+	
+	return value;
+}
+
 ActionReply CPUFreqHelper::read(QVariantMap args)
 {
 	ActionReply reply;
  
-	QString filename = args["filename"].toString();
-	QString procnumb = args["procnumb"].toString();
+	QString filename = get_key_varmap(args, "filename");
+	QString procnumb = get_key_varmap(args, "procnumb");
+	if (filename.isEmpty() or procnumb.isEmpty()) {
+		QVariantMap err;
+		err["contents"] = QString("default");
+		reply.setData(err);
+		return reply;
+	}
 	QFile file;
 	if (filename == "online") {
-	file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/" + filename);
+		file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/" + filename);
 	}
 	else if (filename == "possible") {
-	file.setFileName("/sys/devices/system/cpu/possible");
+		file.setFileName("/sys/devices/system/cpu/possible");
 	}
 	else if (filename == "present") {
-	file.setFileName("/sys/devices/system/cpu/present");
+		file.setFileName("/sys/devices/system/cpu/present");
 	}
 	else {
-	file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/cpufreq/scaling_" + filename);
+		file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/cpufreq/scaling_" + filename);
 	};
  
 	if (!file.open(QIODevice::ReadOnly)) {
@@ -47,16 +66,22 @@ ActionReply CPUFreqHelper::read(QVariantMap args)
 ActionReply CPUFreqHelper::write(QVariantMap args)
 {
 	ActionReply reply;
- 
-	QString filename = args["filename"].toString();
-	QString procnumb = args["procnumb"].toString();
-	QString parametr = args["parametr"].toString();
+
+	QString filename = get_key_varmap(args, "filename");
+	QString procnumb = get_key_varmap(args, "procnumb");
+	QString parametr = get_key_varmap(args, "parametr");
+	if (filename.isEmpty() or procnumb.isEmpty() or parametr.isEmpty()) {
+		reply = ActionReply::HelperErrorReply;
+		reply.setErrorCode(255);
+		reply.setErrorDescription("Some data is not initialized.");
+		return reply;
+	}
 	QFile file;
 	if (filename != "online") {
-	file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/cpufreq/scaling_" + filename);
+		file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/cpufreq/scaling_" + filename);
 	}
 	else {
-	file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/" + filename);
+		file.setFileName("/sys/devices/system/cpu/cpu" + procnumb + "/" + filename);
 	};
  
 	if (!file.open(QIODevice::WriteOnly)) {

@@ -67,9 +67,9 @@ def writeCpuData(number, fileName, parametr):
 def define_proc_data():
 	COUNT_PROCESSOR = os.sysconf('SC_NPROCESSORS_ONLN')
 	procData = {}
-	count = readCpuData('', 'possible').data()[QString('contents')].toString().replace('\n', '').split('-')
-	present = readCpuData('', 'present').data()[QString('contents')].toString().replace('\n', '').split('-')
-	#print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
+	count = readCpuData('null', 'possible').data()[QString('contents')].toString().replace('\n', '').split('-')
+	present = readCpuData('null', 'present').data()[QString('contents')].toString().replace('\n', '').split('-')
+	print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
 	global COUNT_PROC
 	COUNT_PROC = max(COUNT_PROCESSOR, len(count))
 	procData['count'] = COUNT_PROC

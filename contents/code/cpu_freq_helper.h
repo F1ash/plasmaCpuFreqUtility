@@ -10,4 +10,7 @@ class CPUFreqHelper : public QObject
 	public slots:
 		ActionReply read(QVariantMap args);
 		ActionReply write(QVariantMap args);
+
+	private:
+		QString get_key_varmap(const QVariantMap &args, const QString& key);
 };
