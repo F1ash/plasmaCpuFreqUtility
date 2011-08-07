@@ -2,8 +2,7 @@
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyKDE4.kdeui import KComboBox, KIcon, KMenu
-from PyKDE4.kdecore import KUrl, KAuth, KGlobal
+from PyKDE4.kdecore import KAuth, KGlobal
 from PyKDE4.plasma import Plasma
 from PyKDE4 import plasmascript
 import os.path, os
