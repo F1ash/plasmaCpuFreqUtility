@@ -66,17 +66,17 @@ def define_proc_data():
 	procData = {}
 	procData['count'] = COUNT_PROC
 	procData['availableFreqs'] = {i : readCpuData(str(i), 'available_frequencies') for i in xrange(COUNT_PROC)}
-	print [procData['availableFreqs'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	#print [procData['availableFreqs'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	procData['availableGovernors'] = {i : readCpuData(str(i), 'available_governors') for i in xrange(COUNT_PROC)}
-	print [procData['availableGovernors'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	#print [procData['availableGovernors'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	procData['currentFreq'] = {i : readCpuData(str(i), 'cur_freq') for i in xrange(COUNT_PROC)}
-	print [procData['currentFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	#print [procData['currentFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	procData['currentGovernor'] = {i : readCpuData(str(i), 'governor') for i in xrange(COUNT_PROC)}
-	print [procData['currentGovernor'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	#print [procData['currentGovernor'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	procData['currentMaxFreq'] = {i : readCpuData(str(i), 'max_freq') for i in xrange(COUNT_PROC)}
-	print [procData['currentMaxFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	#print [procData['currentMaxFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	procData['currentMinFreq'] = {i : readCpuData(str(i), 'min_freq') for i in xrange(COUNT_PROC)}
-	print [procData['currentMinFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
+	#print [procData['currentMinFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	return procData
 
 class plasmaCpuFreqUtility(plasmascript.Applet):
@@ -120,18 +120,82 @@ class ControlWidget(Plasma.Dialog):
 		self.prnt = obj
 		self.ProcData = procData
 
-		self.comboMenu = KComboBox(False, self)
-		self.comboMenu.addUrl(KIcon('../icons/performance.png'), KUrl('Performance'))
-		self.comboMenu.addUrl(KIcon('../icons/ondemand.png'), KUrl('OnDemand'))
-		self.comboMenu.addUrl(KIcon('../icons/ondemand.png'), KUrl('Conservative'))
-		self.comboMenu.addUrl(KIcon('../icons/powersave.png'), KUrl('PowerSave'))
-		self.comboMenu.setCurrentItem('OnDemand')
-		self.comboMenu.setEditable(False)
-		self.comboMenu.currentIndexChanged['const QString&'].connect(self.regimeDefined)
+		self.accept = QPushButton()
+		self.accept.setText('Apply')
+		self.accept.clicked.connect(self.changeRegime)
+		#self.accept.setMaximumHeight(20)
+		self.reset = QPushButton()
+		self.reset.setText("Reset")
+		self.reset.clicked.connect(self.regimeDefined)
+		#self.reset.setMaximumHeight(20)
+
+		self.buttonPanel = QGridLayout()
+		self.buttonPanel.addWidget(self.reset, 0, 0)
+		self.buttonPanel.addWidget(self.accept, 0, 1)
 
 		self.layout = QGridLayout()
 		self.layout.setSpacing(0)
-		self.layout.addWidget(self.comboMenu, 0, 0)
+		self.layout.addItem(self.buttonPanel, 0, 2)
+		self.minLabel = QLabel('<font color=green>MinFreq</font>')
+		self.maxLabel = QLabel('<font color=red>MaxFreq</font>')
+		self.layout.addWidget(self.minLabel, 0, 3, Qt.AlignCenter)
+		self.layout.addWidget(self.maxLabel, 0, 4, Qt.AlignCenter)
+
+		self.cpuLabel = {}
+		self.cpuEnable = {}
+		self.comboGovernorMenu = {}
+		self.comboMinFreq = {}
+		self.comboMaxFreq = {}
+		for i in xrange(COUNT_PROC) :
+			self.cpuLabel[i] = QLabel('<font color=yellow>CPU' + str(i) + '</font>')
+			self.layout.addWidget(self.cpuLabel[i], 1 + i, 0)
+
+			self.cpuEnable[i] = QCheckBox()
+			if i == 0 :
+				self.cpuEnable[i].setCheckState(Qt.Checked)
+				self.cpuEnable[i].setEnabled(False)
+			else :
+				self.cpuEnable[i].setCheckState(Qt.Checked)
+			self.layout.addWidget(self.cpuEnable[i], 1 + i, 1)
+
+			self.comboGovernorMenu[i] = QComboBox(self)
+			_availableGovernors = self.ProcData['availableGovernors'][i].data()[QString('contents')].toString().replace('\n', '')
+			availableGovernors = _availableGovernors.split(' ')
+			count = availableGovernors.count('')
+			if count > 0 : availableGovernors.removeAll('')
+			for governor in availableGovernors :
+				self.comboGovernorMenu[i].addItem(QIcon('../icons/' + governor + '.png'), governor)
+			currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
+			currGovernorIdx = availableGovernors.indexOf(currentGovernor)
+			#print [currentGovernor], currGovernorIdx, [item for item in availableGovernors]
+			self.comboGovernorMenu[i].setCurrentIndex(currGovernorIdx)
+			self.comboGovernorMenu[i].setEditable(False)
+			#self.comboGovernorMenu[i].currentIndexChanged['const QString&'].connect(self.regimeDefined)
+			self.layout.addWidget(self.comboGovernorMenu[i], 1 + i, 2)
+
+			self.comboMinFreq[i] = QComboBox(self)
+			_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
+			availableFreqs = _availableFreqs.split(' ')
+			count = availableFreqs.count('')
+			if count > 0 : availableFreqs.removeAll('')
+			for j in availableFreqs :
+				self.comboMinFreq[i].addItem(str(j)[:-3])
+			currentMinFreq = self.ProcData['currentMinFreq'][i].data()[QString('contents')].toString().replace('\n', '')
+			currMinFreqIdx = availableFreqs.indexOf(currentMinFreq)
+			self.comboMinFreq[i].setCurrentIndex(currMinFreqIdx)
+			self.layout.addWidget(self.comboMinFreq[i], 1 + i, 3)
+
+			self.comboMaxFreq[i] = QComboBox(self)
+			_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
+			availableFreqs = _availableFreqs.split(' ')
+			count = availableFreqs.count('')
+			if count > 0 : availableFreqs.removeAll('')
+			for j in availableFreqs :
+				self.comboMaxFreq[i].addItem(str(j)[:-3])
+			currentMaxFreq = self.ProcData['currentMaxFreq'][i].data()[QString('contents')].toString().replace('\n', '')
+			currMaxFreqIdx = availableFreqs.indexOf(currentMaxFreq)
+			self.comboMaxFreq[i].setCurrentIndex(currMaxFreqIdx)
+			self.layout.addWidget(self.comboMaxFreq[i], 1 + i, 4)
 
 		self.setLayout(self.layout)
 
@@ -139,9 +203,9 @@ class ControlWidget(Plasma.Dialog):
 		print str_, '==='
 		if str_ == 'Performance' :
 			self.changeRegime('performance')
-		elif str_ == 'OnDemand':
+		elif str_ == 'OnDemand' :
 			self.changeRegime('ondemand')
-		elif str_ == 'Conservative':
+		elif str_ == 'Conservative' :
 			self.changeRegime('conservative')
 		elif str_== 'PowerSave' :
 			self.changeRegime('powersave')
@@ -157,7 +221,8 @@ class ControlWidget(Plasma.Dialog):
 		print act.status()
 		reply = act.execute()
 		if (reply.failed()) :
-			QMessageBox.information(self, "Error", QString("KAuth returned an error code: %1").arg(reply.errorCode()))
+			QMessageBox.information(self, "Error",
+					QString("KAuth returned an error code: %1 \n %2").arg(reply.errorCode()).arg(reply.errorDescription()))
 		else :
 			print reply.data(), 'reply'
 
