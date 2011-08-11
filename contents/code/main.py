@@ -69,7 +69,7 @@ def define_proc_data():
 	procData = {}
 	count = readCpuData('null', 'possible').data()[QString('contents')].toString().replace('\n', '').split('-')
 	present = readCpuData('null', 'present').data()[QString('contents')].toString().replace('\n', '').split('-')
-	print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
+	#print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
 	global COUNT_PROC
 	COUNT_PROC = max(COUNT_PROCESSOR, len(count))
 	procData['count'] = COUNT_PROC
@@ -112,10 +112,7 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		self.layout.addItem(self.icon)
 
 		self.setLayout(self.layout)
-
-		Plasma.ToolTipManager.self().setContent( self.applet, Plasma.ToolTipContent( \
-								'CPU FreqUtility', \
-								QString(''), self.icon.icon() ) )
+		self.setTooltip(self.Control.getNewProcParemeters())
 
 	def mouseDoubleClickEvent(self, ev = True):
 		if type(ev) is not bool : ev.ignore()
@@ -129,7 +126,23 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		self.Control.close()
 		self.ProcData = define_proc_data()
 		self.Control = ControlWidget(self.ProcData, self)
-		self.mouseDoubleClickEvent()
+		self.setTooltip(self.Control.getNewProcParemeters())
+		#self.mouseDoubleClickEvent()
+
+	def setTooltip(self, newParameters):
+		htmlStr = ''
+		for i in xrange(COUNT_PROC) :
+			if i == 0 or newParameters[i]['enable'] == 1 :
+				enable = '<font color=red> on </font>'
+			elif newParameters[i]['enable'] == 0 :
+				enable = '<font color=blue><b>' + ' off ' + '</b></font>'
+			htmlStr += "<pre><font color=yellow>CPU" + str(i) + '</font>' + enable
+			htmlStr += ' <b>' + newParameters[i]['regime'] + '</b>'
+			htmlStr += ' <font color=green>' + newParameters[i]['minfrq'][:-3] + '</font>'
+			htmlStr += ' <font color=red>' + newParameters[i]['maxfrq'][:-3] + '</font><br></pre>'
+		Plasma.ToolTipManager.self().setContent( self.applet, Plasma.ToolTipContent( \
+								'CPU FreqUtility', \
+								QString(htmlStr), self.icon.icon() ) )
 
 class ControlWidget(Plasma.Dialog):
 	def __init__(self, procData, obj, parent = None):
@@ -243,7 +256,10 @@ class ControlWidget(Plasma.Dialog):
 
 			newParameters[i] = {}
 			""" WARNING : /sys/devices/system/cpu/cpu0/online not exist anyway """
-			if i != 0 : newParameters[i]['enable'] = int(self.cpuEnable[i].checkState())/2
+			if i != 0 :
+				newParameters[i]['enable'] = int(self.cpuEnable[i].checkState())/2
+			else :
+				newParameters[i]['enable'] = 1
 			newParameters[i]['regime'] = self.comboGovernorMenu[i].currentText()
 			value = self.comboMinFreq[i].currentText()
 			if value != 'default' : value += '000'
