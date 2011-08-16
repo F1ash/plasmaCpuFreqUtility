@@ -20,6 +20,8 @@ def readCpuData(number, fileName):
 	if (reply.failed()) :
 		QMessageBox.information(None, "Error", \
 					QString("KAuth returned an error code: %1 \n %2").arg(reply.errorCode()).arg(reply.errorDescription()))
+		reply.setData(QVariant({QString('contents') : 0}).toMap())
+		#print [reply.data()]
 	else :
 		#print reply.data(), 'reply from :', act.hasHelper(), act.name(), 'Valid is', act.isValid()
 		pass
@@ -67,10 +69,16 @@ def writeCpuData(number, fileName, parametr):
 def define_proc_data():
 	COUNT_PROCESSOR = os.sysconf('SC_NPROCESSORS_ONLN')
 	procData = {}
-	count = readCpuData('null', 'possible').data()[QString('contents')].toString().replace('\n', '').split('-')
-	present = readCpuData('null', 'present').data()[QString('contents')].toString().replace('\n', '').split('-')
+	_count = readCpuData('null', 'possible')
+	count = _count.data()[QString('contents')].toString().replace('\n', '').split('-')
+	_present = readCpuData('null', 'present')
+	present = _present.data()[QString('contents')].toString().replace('\n', '').split('-')
 	#print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
 	global COUNT_PROC
+	if _count.failed() or _present.failed() :
+		COUNT_PROC = 0
+		procData['count'] = COUNT_PROC
+		return procData
 	COUNT_PROC = max(COUNT_PROCESSOR, len(count))
 	procData['count'] = COUNT_PROC
 	procData['availableFreqs'] = {int(i) : readCpuData(str(i), 'available_frequencies') for i in present}
@@ -96,22 +104,25 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		plasmascript.Applet.__init__(self, parent)
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
-		self.iconPath = self.kdehome + 'share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/icon.svg'
-		
-		self.icon = Plasma.IconWidget()
-		self.icon.setIcon(self.iconPath)
-		self.icon.clicked.connect(self.mouseDoubleClickEvent)
-		self.ProcData = define_proc_data()
+
+		if os.path.exists(self.kdehome + '/share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/performance.png') :
+			self.iconPath = self.kdehome + '/share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/performance.png'
+			#print 'installing', self.iconPath
+		else :
+			self.iconPath = os.getcwd() + '/plasmaCpuFreqUtility/contents/icons/performance.png'
 
 	def init(self):
 		self.setImmutability(Plasma.Mutable)
 		self.layout = QGraphicsLinearLayout(self.applet)
 		self.layout.setSpacing(0)
-		self.Control = ControlWidget(self.ProcData, self)
-
+		self.icon = Plasma.IconWidget()
+		self.icon.setIcon(self.iconPath)
+		self.icon.clicked.connect(self.mouseDoubleClickEvent)
 		self.layout.addItem(self.icon)
-
 		self.setLayout(self.layout)
+
+		self.ProcData = define_proc_data()
+		self.Control = ControlWidget(self.ProcData, self, os.path.dirname(self.iconPath))
 		self.setTooltip(self.Control.getNewProcParemeters())
 
 	def mouseDoubleClickEvent(self, ev = True):
@@ -125,31 +136,40 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 	def parametersReset(self):
 		self.Control.close()
 		self.ProcData = define_proc_data()
-		self.Control = ControlWidget(self.ProcData, self)
+		self.Control = ControlWidget(self.ProcData, self, os.path.dirname(self.iconPath))
 		self.setTooltip(self.Control.getNewProcParemeters())
 		#self.mouseDoubleClickEvent()
 
 	def setTooltip(self, newParameters):
-		htmlStr = ''
+		htmlStr = '<b>'
 		for i in xrange(COUNT_PROC) :
 			if i == 0 or newParameters[i]['enable'] == 1 :
 				enable = '<font color=red> on </font>'
 			elif newParameters[i]['enable'] == 0 :
-				enable = '<font color=blue><b>' + ' off ' + '</b></font>'
+				enable = '<font color=blue> off </font>'
 			htmlStr += "<pre><font color=yellow>CPU" + str(i) + '</font>' + enable
-			htmlStr += ' <b>' + newParameters[i]['regime'] + '</b>'
+			htmlStr += ' ' + newParameters[i]['regime']
 			htmlStr += ' <font color=green>' + newParameters[i]['minfrq'][:-3] + '</font>'
 			htmlStr += ' <font color=red>' + newParameters[i]['maxfrq'][:-3] + '</font><br></pre>'
+		htmlStr += '</b>'
 		Plasma.ToolTipManager.self().setContent( self.applet, Plasma.ToolTipContent( \
 								'CPU FreqUtility', \
 								QString(htmlStr), self.icon.icon() ) )
 
 class ControlWidget(Plasma.Dialog):
-	def __init__(self, procData, obj, parent = None):
+	def __init__(self, procData, obj, iconDir, parent = None):
 		Plasma.Dialog.__init__(self, parent)
 		self.prnt = obj
 		self.ProcData = procData
-		self.kdehome = unicode(KGlobal.dirs().localkdedir())
+
+		self.layout = QGridLayout()
+		self.layout.setSpacing(0)
+		#print [self.ProcData]
+		if self.ProcData['count'] == 0 :
+			self.errorLabel = QLabel('<font color=red size=7>ERROR</font>')
+			self.layout.addWidget(self.errorLabel, 0, 0, 2, 4, Qt.AlignCenter)
+			self.setLayout(self.layout)
+			return None
 
 		self.accept = QPushButton()
 		self.accept.setText('Apply')
@@ -163,9 +183,6 @@ class ControlWidget(Plasma.Dialog):
 		self.buttonPanel = QGridLayout()
 		self.buttonPanel.addWidget(self.reset, 0, 0)
 		self.buttonPanel.addWidget(self.accept, 0, 1)
-
-		self.layout = QGridLayout()
-		self.layout.setSpacing(0)
 		self.layout.addItem(self.buttonPanel, 0, 2)
 		self.minLabel = QLabel('<font color=green>MinFreq</font>')
 		self.maxLabel = QLabel('<font color=red>MaxFreq</font>')
@@ -202,16 +219,16 @@ class ControlWidget(Plasma.Dialog):
 			if count > 0 : availableGovernors.removeAll('')
 			availableGovernors.append('powersave')
 			availableGovernors.append('conservative')
-			availableGovernors.removeDuplicates()
-			for governor in availableGovernors :
-				iconPath = self.kdehome + 'share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/'
-				if os.path.isfile(iconPath + governor + '.png') :
-					path_ = iconPath + governor + '.png'
-				else :
-					path_ = iconPath + 'ondemand.png'
-				self.comboGovernorMenu[i].addItem(QIcon(), governor)
 			currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
 			currGovernorIdx = availableGovernors.indexOf(currentGovernor)
+			availableGovernors.removeDuplicates()
+			for governor in availableGovernors :
+				if os.path.isfile(iconDir + '/' + governor + '.png') :
+					path_ = iconDir + '/' + governor + '.png'
+				else :
+					path_ = iconDir + '/ondemand.png'
+				self.comboGovernorMenu[i].addItem(QIcon(path_), governor)
+				if governor == currentGovernor : self.prnt.icon.setIcon(path_)
 			#print [currentGovernor], currGovernorIdx, [item for item in availableGovernors]
 			self.comboGovernorMenu[i].setCurrentIndex(currGovernorIdx)
 			self.comboGovernorMenu[i].setEditable(False)
