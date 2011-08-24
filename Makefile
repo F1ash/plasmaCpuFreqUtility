@@ -27,7 +27,7 @@ install: build
 	$(INSTALL) $(ICONS)/ondemand.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/ondemand.png
 	$(INSTALL) $(ICONS)/performance.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/performance.png
 	$(INSTALL) $(ICONS)/powersave.png $(DESTDIR)/$(KAPPS)/$(PLASMA)/$(APP_NAME)/$(ICONS)/powersave.png
-	$(INSTALL) $(DESTDIR)/local/$(CONFIG) $(CONFIG)
+	$(INSTALL) $(DESTDIR)/local/$(CONFIG) /$(CONFIG)
 
 clean:
 	rm -rf $(DESTDIR)/$(KSERV)/$(APP_NAME).desktop
