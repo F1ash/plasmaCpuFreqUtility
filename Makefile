@@ -11,12 +11,14 @@ CONFIG=etc/dbus-1/system.d/$(DBUS_SERV_NAME).conf
 ARCH=${arch=${HOSTTYPE:${#HOSTTYPE}-2}//86/}
 
 contents/code/build:
-	cd contents/code
+	pushd contents/code
 	mkdir build
-	cd build
+	pushd build
 	cmake ..
 	make
 	make install
+	popd
+	popd
 
 build: contents/code/build
 	@echo "Nothing to build"
