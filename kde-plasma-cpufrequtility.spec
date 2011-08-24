@@ -24,21 +24,22 @@ kde-plasma-cpufrequtility
 %prep
 %setup -q
 
+%build
+make %{?_smp_mflags}
+
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/kde4/apps/plasma/plasmoids/%{name}
-cp -r * $RPM_BUILD_ROOT/%{_datadir}/kde4/apps/plasma/plasmoids/%{name}/
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/kde4/services
-cp -r metadata.desktop $RPM_BUILD_ROOT/%{_datadir}/kde4/services/%{name}.desktop
-cp $RPM_BUILD_ROOT/usr/local/etc/dbus-1/system.d/org.freedesktop.auth.cpufrequtility.conf \
-   %{_sysconfdir}/dbus-1/system.d/org.freedesktop.auth.cpufrequtility.conf
+make install DESTDIR=$RPM_BUILD_ROOT/usr
 
 %files
 %defattr(-,root,root)
 %{_datadir}/kde4/services/%{name}.desktop
 %{_datadir}/kde4/apps/plasma/plasmoids/%{name}/*
-%{_sysconfdir}/dbus-1/system.d/org.freedesktop.auth.cpufrequtility.conf
 %dir %{_datadir}/kde4/apps/plasma/plasmoids/%{name}
+%{_sysconfdir}/dbus-1/system.d/org.freedesktop.auth.cpufrequtility.conf
+%{_prefix}/local/org.freedesktop.auth.cpufrequtility.conf
+%{_prefix}/local/lib64/kde4/libexec/cpu_freq_helper
+%{_prefix}/local/share/dbus-1/system-services/org.freedesktop.auth.cpufrequtility.service
+%{_prefix}/share/polkit-1/actions/org.freedesktop.auth.cpufrequtility.policy
 
 %clean
 rm -rf $RPM_BUILD_ROOT
