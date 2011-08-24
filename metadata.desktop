@@ -1,6 +1,6 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=CPU FreqUtility
+Name=CPUFreq Utility
 Type=Service
 ServiceTypes=Plasma/Applet
 Icon=/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-cpufrequtility/contents/icons/performance.png
