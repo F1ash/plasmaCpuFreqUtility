@@ -16,6 +16,7 @@ contents/code/build:
 	cd build
 	cmake ..
 	make
+	make install
 
 build: contents/code/build
 	@echo "Nothing to build"
