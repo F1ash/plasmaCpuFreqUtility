@@ -105,8 +105,10 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 
 		self.kdehome = unicode(KGlobal.dirs().localkdedir())
 
-		if os.path.exists(self.kdehome + '/share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/performance.png') :
-			self.iconPath = self.kdehome + '/share/apps/plasma/plasmoids/plasmaCpuFreqUtility/contents/icons/performance.png'
+		if os.path.exists('/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-cpufrequtility/contents/icons/performance.png') :
+			self.iconPath = '/usr/share/kde4/apps/plasma/plasmoids/kde-plasma-cpufrequtility/contents/icons/performance.png'
+		elif os.path.exists(self.kdehome + '/share/apps/plasma/plasmoids/kde-plasma-cpufrequtility/contents/icons/performance.png') :
+			self.iconPath = self.kdehome + '/share/apps/plasma/plasmoids/kde-plasma-cpufrequtility/contents/icons/performance.png'
 			#print 'installing', self.iconPath
 		else :
 			self.iconPath = os.getcwd() + '/plasmaCpuFreqUtility/contents/icons/performance.png'
