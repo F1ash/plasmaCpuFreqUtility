@@ -113,6 +113,8 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		else :
 			self.iconPath = os.getcwd() + '/plasmaCpuFreqUtility/contents/icons/performance.png'
 
+		self.Settings = QSettings('kde-plasma-cpufrequtility', 'kde-plasma-cpufrequtility')
+
 	def init(self):
 		self.setImmutability(Plasma.Mutable)
 		self.layout = QGraphicsLinearLayout(self.applet)
@@ -123,9 +125,15 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		self.layout.addItem(self.icon)
 		self.setLayout(self.layout)
 
-		self.ProcData = define_proc_data()
-		self.Control = ControlWidget(self.ProcData, self, os.path.dirname(self.iconPath))
-		self.setTooltip(self.Control.getNewProcParemeters())
+		enabled = self.Settings.value('Remember', 0).toInt()[0]
+		if bool(enabled) :
+			self.ProcData = self.getLastProcParemeters()
+			self.Control = ControlWidget({}, self, os.path.dirname(self.iconPath))
+			self.Control.changeRegime(self.ProcData)
+		else :
+			self.ProcData = define_proc_data()
+			self.Control = ControlWidget(self.ProcData, self, os.path.dirname(self.iconPath))
+			self.setTooltip(self.Control.getNewProcParemeters())
 
 	def mouseDoubleClickEvent(self, ev = True):
 		if type(ev) is not bool : ev.ignore()
@@ -158,6 +166,19 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 								'CPU FreqUtility', \
 								QString(htmlStr), self.icon.icon() ) )
 
+	def getLastProcParemeters(self):
+		lastParameters = {}
+		i = 0
+		for paramProc in self.Settings.value('Parameters', '').toString().split(";;", QString.SkipEmptyParts) :
+			lastParameters[i] = {}
+			parameters = paramProc.split(" ", QString.SkipEmptyParts)
+			lastParameters[i]['enable'] = int(parameters[0])
+			lastParameters[i]['regime'] = str(parameters[1])
+			lastParameters[i]['minfrq'] = str(parameters[2])
+			lastParameters[i]['maxfrq'] = str(parameters[3])
+			i += 1
+		return lastParameters
+
 class ControlWidget(Plasma.Dialog):
 	def __init__(self, procData, obj, iconDir, parent = None):
 		Plasma.Dialog.__init__(self, parent)
@@ -167,11 +188,19 @@ class ControlWidget(Plasma.Dialog):
 		self.layout = QGridLayout()
 		self.layout.setSpacing(0)
 		#print [self.ProcData]
-		if self.ProcData['count'] == 0 :
+		if len(procData) == 0 or self.ProcData['count'] == 0 :
 			self.errorLabel = QLabel('<font color=red size=7>ERROR</font>')
 			self.layout.addWidget(self.errorLabel, 0, 0, 2, 4, Qt.AlignCenter)
 			self.setLayout(self.layout)
 			return None
+
+		self.rememberBox = QCheckBox()
+		self.rememberBox.setToolTip('Restore the last state')
+		enabled = self.prnt.Settings.value('Remember', 0).toInt()[0]
+		if bool(enabled) :
+			self.rememberBox.setCheckState(Qt.Checked)
+		else :
+			self.rememberBox.setCheckState(Qt.Unchecked)
 
 		self.accept = QPushButton()
 		self.accept.setText('Apply')
@@ -185,9 +214,11 @@ class ControlWidget(Plasma.Dialog):
 		self.buttonPanel = QGridLayout()
 		self.buttonPanel.addWidget(self.reset, 0, 0)
 		self.buttonPanel.addWidget(self.accept, 0, 1)
-		self.layout.addItem(self.buttonPanel, 0, 2)
 		self.minLabel = QLabel('<font color=green>MinFreq</font>')
 		self.maxLabel = QLabel('<font color=red>MaxFreq</font>')
+
+		self.layout.addWidget(self.rememberBox, 0, 1, Qt.AlignCenter)
+		self.layout.addItem(self.buttonPanel, 0, 2)
 		self.layout.addWidget(self.minLabel, 0, 3, Qt.AlignCenter)
 		self.layout.addWidget(self.maxLabel, 0, 4, Qt.AlignCenter)
 
@@ -289,9 +320,19 @@ class ControlWidget(Plasma.Dialog):
 
 		return newParameters
 
-	def changeRegime(self, key = None):
-		newParameters = self.getNewProcParemeters()
+	def changeRegime(self, data = None):
+		if type(data) is dict :
+			global COUNT_PROC
+			COUNT_PROC = len(data)
+			newParameters = data
+		else :
+			newParameters = self.getNewProcParemeters()
+		paramProc = ''
 		for i in xrange(COUNT_PROC) :
+			paramProc += str(newParameters[i]['enable']) + ' ' + \
+						 newParameters[i]['regime'] + ' ' + \
+						 newParameters[i]['minfrq'] + ' ' + \
+						 newParameters[i]['maxfrq'] + ';;'
 			""" WARNING : /sys/devices/system/cpu/cpu0/online not exist anyway """
 			if i != 0 :
 				#print i, 'online', newParameters[i]['enable']
@@ -305,6 +346,15 @@ class ControlWidget(Plasma.Dialog):
 			if newParameters[i]['minfrq'] != 'default' : writeCpuData(i, 'min_freq', newParameters[i]['minfrq'])
 			#print i, 'max_freq', newParameters[i]['maxfrq']
 			if newParameters[i]['maxfrq'] != 'default' : writeCpuData(i, 'max_freq', newParameters[i]['maxfrq'])
+
+		if type(data) is not dict :
+			if self.rememberBox.checkState() == Qt.Checked :
+				self.prnt.Settings.setValue('Remember', 1)
+				self.prnt.Settings.setValue('Parameters', paramProc)
+			else :
+				self.prnt.Settings.setValue('Remember', 0)
+				self.prnt.Settings.setValue('Parameters', '')
+			self.prnt.Settings.sync()
 		self.prnt.parametersReset()
 
 def CreateApplet(parent):
