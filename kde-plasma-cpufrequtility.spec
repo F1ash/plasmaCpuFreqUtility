@@ -1,7 +1,7 @@
 %define cmake_build_dir build-cmake
 
 Name: kde-plasma-cpufrequtility
-Version: 1.2
+Version: 1.3
 Release: 1%{?dist}
 Summary: CPU Frequence Utility plasmoid.
 Summary(ru): Плазмоид для управления режимом работы процессора.
@@ -59,5 +59,5 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Mon Aug 22 2011 Fl@sh <kaperang07@gmail.com> - 1.2-1
+* Mon Aug 22 2011 Fl@sh <kaperang07@gmail.com> - 1.3-1
 - Initial build
