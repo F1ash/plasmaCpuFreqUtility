@@ -1,5 +1,5 @@
 if (NOT CMAKE_INSTALL_PREFIX) 
- set (CMAKE_INSTALL_PREFIX /usr/local) 
+ set (CMAKE_INSTALL_PREFIX /usr) 
 endif ()
 
 project (kde-plasma-cpufrequtility)
