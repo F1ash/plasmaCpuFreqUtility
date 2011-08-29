@@ -3,6 +3,7 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyKDE4.kdecore import KAuth, KGlobal
+from PyKDE4.kdeui import KPageDialog, KDialog
 from PyKDE4.plasma import Plasma
 from PyKDE4 import plasmascript
 import os.path, os
@@ -117,6 +118,7 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 
 	def init(self):
 		self.setImmutability(Plasma.Mutable)
+		self.setHasConfigurationInterface(True)
 		self.layout = QGraphicsLinearLayout(self.applet)
 		self.layout.setSpacing(0)
 		self.icon = Plasma.IconWidget()
@@ -124,6 +126,7 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		self.icon.clicked.connect(self.mouseDoubleClickEvent)
 		self.layout.addItem(self.icon)
 		self.setLayout(self.layout)
+		self.colorSelect = ColorWidget(self)
 
 		enabled = self.Settings.value('Remember', 0).toInt()[0]
 		if bool(enabled) :
@@ -154,13 +157,13 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		htmlStr = '<b>'
 		for i in xrange(COUNT_PROC) :
 			if i == 0 or newParameters[i]['enable'] == 1 :
-				enable = '<font color=red> on </font>'
+				enable = '<font color=' + self.colorSelect.enableOnColor + '> on </font>'
 			elif newParameters[i]['enable'] == 0 :
-				enable = '<font color=blue> off </font>'
-			htmlStr += "<pre><font color=yellow>CPU" + str(i) + '</font>' + enable
-			htmlStr += ' ' + newParameters[i]['regime']
-			htmlStr += ' <font color=green>' + newParameters[i]['minfrq'][:-3] + '</font>'
-			htmlStr += ' <font color=red>' + newParameters[i]['maxfrq'][:-3] + '</font><br></pre>'
+				enable = '<font color=' + self.colorSelect.enableOffColor + '> off </font>'
+			htmlStr += '<pre><font color=' + self.colorSelect.cpuColor + '>CPU' + str(i) + '</font>' + enable
+			htmlStr += ' <font color=' + self.colorSelect.governorColor + '>' + newParameters[i]['regime'] + '</font>'
+			htmlStr += ' <font color=' + self.colorSelect.minFreqColor + '>' + newParameters[i]['minfrq'][:-3] + '</font>'
+			htmlStr += ' <font color=' + self.colorSelect.maxFreqColor + '>' + newParameters[i]['maxfrq'][:-3] + '</font><br></pre>'
 		htmlStr += '</b>'
 		Plasma.ToolTipManager.self().setContent( self.applet, Plasma.ToolTipContent( \
 								'CPU FreqUtility', \
@@ -178,6 +181,29 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 			lastParameters[i]['maxfrq'] = str(parameters[3])
 			i += 1
 		return lastParameters
+
+	def createConfigurationInterface(self, parent):
+		self.colorSelect = ColorWidget(self, parent)
+		parent.addPage(self.colorSelect, "Color")
+		self.connect(parent, SIGNAL("okClicked()"), self.configAccepted)
+		self.connect(parent, SIGNAL("cancelClicked()"), self.configDenied)
+
+	def showConfigurationInterface(self):
+		self.dialog = KPageDialog()
+		self.dialog.setModal(True)
+		self.dialog.setFaceType(KPageDialog.List)
+		self.dialog.setButtons( KDialog.ButtonCode(KDialog.Ok | KDialog.Cancel) )
+		self.createConfigurationInterface(self.dialog)
+		self.dialog.move(self.popupPosition(self.dialog.sizeHint()))
+		self.dialog.exec_()
+
+	def configAccepted(self):
+		self.colorSelect.refreshInterfaceSettings()
+		self.dialog.done(0)
+		self.parametersReset()
+
+	def configDenied(self):
+		self.dialog.done(0)
 
 class ControlWidget(Plasma.Dialog):
 	def __init__(self, procData, obj, iconDir, parent = None):
@@ -214,8 +240,8 @@ class ControlWidget(Plasma.Dialog):
 		self.buttonPanel = QGridLayout()
 		self.buttonPanel.addWidget(self.reset, 0, 0)
 		self.buttonPanel.addWidget(self.accept, 0, 1)
-		self.minLabel = QLabel('<font color=green>MinFreq</font>')
-		self.maxLabel = QLabel('<font color=red>MaxFreq</font>')
+		self.minLabel = QLabel('<font color=' + self.prnt.colorSelect.minFreqColor + '>MinFreq</font>')
+		self.maxLabel = QLabel('<font color=' + self.prnt.colorSelect.maxFreqColor + '>MaxFreq</font>')
 
 		self.layout.addWidget(self.rememberBox, 0, 1, Qt.AlignCenter)
 		self.layout.addItem(self.buttonPanel, 0, 2)
@@ -228,7 +254,7 @@ class ControlWidget(Plasma.Dialog):
 		self.comboMinFreq = {}
 		self.comboMaxFreq = {}
 		for i in xrange(COUNT_PROC) :
-			self.cpuLabel[i] = QLabel('<font color=yellow>CPU' + str(i) + '</font>')
+			self.cpuLabel[i] = QLabel('<font color=' + self.prnt.colorSelect.cpuColor + '>CPU' + str(i) + '</font>')
 			self.layout.addWidget(self.cpuLabel[i], 1 + i, 0)
 
 			self.cpuEnable[i] = QCheckBox()
@@ -356,6 +382,88 @@ class ControlWidget(Plasma.Dialog):
 				self.prnt.Settings.setValue('Parameters', '')
 			self.prnt.Settings.sync()
 		self.prnt.parametersReset()
+
+class ColorWidget(QWidget):
+	def __init__(self, obj = None, parent= None):
+		QWidget.__init__(self, parent)
+
+		self.prnt = parent
+		self.Settings = obj.Settings
+		colorNames = QColor().colorNames()
+		self.initVar()
+
+		self.layout = QGridLayout()
+
+		self.cpuColorLabel = QLabel('cpuColor :')
+		self.layout.addWidget(self.cpuColorLabel, 0, 0)
+		self.cpuColorBox = QComboBox()
+		self.cpuColorBox.setMaximumWidth(150)
+		self.cpuColorBox.addItems(colorNames)
+		self.cpuColorBox.setCurrentIndex(self.cpuColorBox.findText(self.cpuColor))
+		self.layout.addWidget(self.cpuColorBox, 0, 1)
+
+		self.enableOnColorLabel = QLabel('enableOnColor :')
+		self.layout.addWidget(self.enableOnColorLabel, 1, 0)
+		self.enableOnColorBox = QComboBox()
+		self.enableOnColorBox.setMaximumWidth(150)
+		self.enableOnColorBox.addItems(colorNames)
+		self.enableOnColorBox.setCurrentIndex(self.enableOnColorBox.findText(self.enableOnColor))
+		self.layout.addWidget(self.enableOnColorBox, 1, 1)
+
+		self.enableOffColorLabel = QLabel('enableOffColor :')
+		self.layout.addWidget(self.enableOffColorLabel, 2, 0)
+		self.enableOffColorBox = QComboBox()
+		self.enableOffColorBox.setMaximumWidth(150)
+		self.enableOffColorBox.addItems(colorNames)
+		self.enableOffColorBox.setCurrentIndex(self.enableOffColorBox.findText(self.enableOffColor))
+		self.layout.addWidget(self.enableOffColorBox, 2, 1)
+
+		self.governorColorLabel = QLabel('governorColor :')
+		self.layout.addWidget(self.governorColorLabel, 3, 0)
+		self.governorColorBox = QComboBox()
+		self.governorColorBox.setMaximumWidth(150)
+		self.governorColorBox.addItems(colorNames)
+		self.governorColorBox.setCurrentIndex(self.governorColorBox.findText(self.governorColor))
+		self.layout.addWidget(self.governorColorBox, 3, 1)
+
+		self.maxFreqColorLabel = QLabel('maxFreqColor :')
+		self.layout.addWidget(self.maxFreqColorLabel, 4, 0)
+		self.maxFreqColorBox = QComboBox()
+		self.maxFreqColorBox.setMaximumWidth(150)
+		self.maxFreqColorBox.addItems(colorNames)
+		self.maxFreqColorBox.setCurrentIndex(self.maxFreqColorBox.findText(self.maxFreqColor))
+		self.layout.addWidget(self.maxFreqColorBox, 4, 1)
+
+		self.minFreqColorLabel = QLabel('minFreqColor :')
+		self.layout.addWidget(self.minFreqColorLabel, 5, 0)
+		self.minFreqColorBox = QComboBox()
+		self.minFreqColorBox.setMaximumWidth(150)
+		self.minFreqColorBox.addItems(colorNames)
+		self.minFreqColorBox.setCurrentIndex(self.minFreqColorBox.findText(self.minFreqColor))
+		self.layout.addWidget(self.minFreqColorBox, 5, 1)
+
+		self.setLayout(self.layout)
+
+	def initVar(self):
+		self.cpuColor = self.Settings.value('CPU', 'yellow').toString()
+		self.enableOnColor = self.Settings.value('EnableOn', 'red').toString()
+		self.enableOffColor = self.Settings.value('EnableOff', 'blue').toString()
+		self.governorColor = self.Settings.value('Governor', 'white').toString()
+		self.maxFreqColor = self.Settings.value('MaxFreq', 'red').toString()
+		self.minFreqColor = self.Settings.value('MinFreq', 'green').toString()
+
+	def refreshInterfaceSettings(self):
+		self.Settings.setValue('CPU', self.cpuColorBox.currentText())
+		self.Settings.setValue('EnableOn', self.enableOnColorBox.currentText())
+		self.Settings.setValue('EnableOff', self.enableOffColorBox.currentText())
+		self.Settings.setValue('Governor', self.governorColorBox.currentText())
+		self.Settings.setValue('MaxFreq', self.maxFreqColorBox.currentText())
+		self.Settings.setValue('MinFreq', self.minFreqColorBox.currentText())
+		self.Settings.sync()
+		self.initVar()
+
+	def eventClose(self, event):
+		self.prnt.done(0)
 
 def CreateApplet(parent):
 	return plasmaCpuFreqUtility(parent)
