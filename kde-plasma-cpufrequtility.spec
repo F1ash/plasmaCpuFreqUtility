@@ -1,8 +1,8 @@
 %define cmake_build_dir build-cmake
 
 Name: kde-plasma-cpufrequtility
-Version: 1.4
-Release: 1%{?dist}
+Version: 1.4.1
+Release: 2%{?dist}
 Summary: CPU Frequence Utility plasmoid.
 Summary(ru): Плазмоид для управления режимом работы процессора.
 Group: Applications/Utility
@@ -42,22 +42,22 @@ popd
 %files
 %defattr(-,root,root)
 %{_datadir}/kde4/services/%{name}.desktop
-%{_datadir}/kde4/apps/plasma/plasmoids/%{name}/*
-%dir %{_datadir}/kde4/apps/plasma/plasmoids/%{name}
+%{_datadir}/kde4/apps/plasma/plasmoids/%{name}
 %{_sysconfdir}/dbus-1/system.d/org.freedesktop.auth.cpufrequtility.conf
 %{_libexecdir}/kde4/cpu_freq_helper
 %{_datadir}/dbus-1/system-services/org.freedesktop.auth.cpufrequtility.service
 %{_datadir}/polkit-1/actions/org.freedesktop.auth.cpufrequtility.policy
 
-#%{_prefix}/local/org.freedesktop.auth.cpufrequtility.conf
-#%{_prefix}/local/lib64/kde4/libexec/cpu_freq_helper
-#%{_prefix}/local/share/dbus-1/system-services/org.freedesktop.auth.cpufrequtility.service
-#%{_prefix}/share/polkit-1/actions/org.freedesktop.auth.cpufrequtility.policy
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %changelog
+
+* Wed Aug 31 2011 <kaperang07@gmail.com> - 1.4.1-2
+- fixed cpu info store to dict
+
+* Mon Aug 29 2011 <kaperang07@gmail.com> - 1.4-2
+- some fixes in kde-plasma-cpufrequtility.spec
 
 * Mon Aug 29 2011 <kaperang07@gmail.com> - 1.4-1
 - added color settings

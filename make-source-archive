@@ -7,6 +7,7 @@ cd ..
 cp -f -r ./$APP_NAME ./$APP_NAME-$APP_VERSION
 rm -rf ./$APP_NAME-$APP_VERSION/.git
 rm -rf ./$APP_NAME-$APP_VERSION/.gitignore
+rm -rf ./$APP_NAME-$APP_VERSION/make-source-archive
 find ./$APP_NAME-$APP_VERSION -type f -name *.pyc -exec rm -f {} \;
 find ./$APP_NAME-$APP_VERSION -type f -name *.pyo -exec rm -f {} \;
 tar cfj $APP_NAME-$APP_VERSION.tar.bz2 ./$APP_NAME-$APP_VERSION
