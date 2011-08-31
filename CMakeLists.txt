@@ -31,7 +31,7 @@ endif ()
 kde4_add_executable(cpu_freq_helper ${cpu_freq_helper_SRCS})
 target_link_libraries(cpu_freq_helper ${KDE4_KDECORE_LIBS})
 
-install(TARGETS cpu_freq_helper DESTINATION ${IKDE4_LIBEXEC_DIR})
+install(TARGETS cpu_freq_helper DESTINATION ${LIBEXEC_INSTALL_DIR})
 kde4_install_auth_actions(org.freedesktop.auth.cpufrequtility contents/code/org.freedesktop.auth.cpufrequtility.actions)
 kde4_install_auth_helper_files(cpu_freq_helper org.freedesktop.auth.cpufrequtility root)
 
