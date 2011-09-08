@@ -74,7 +74,7 @@ def define_proc_data():
 	count = _count.data()[QString('contents')].toString().replace('\n', '').split('-')
 	_present = readCpuData('null', 'present')
 	present = _present.data()[QString('contents')].toString().replace('\n', '').split('-')
-	#print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
+	print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
 	global COUNT_PROC
 	if _count.failed() or _present.failed() :
 		COUNT_PROC = 0
@@ -97,7 +97,7 @@ def define_proc_data():
 	""" WARNING : /sys/devices/system/cpu/cpu0/online not exist anyway """
 	procData['online'] = {}
 	for i in present : procData['online'][int(i)] = readCpuData(str(i), 'online')
-	#print [(i, procData['online'][i].data()[QString('contents')].toString()) for i in xrange(COUNT_PROC)]
+	print [(i, procData['online'][i].data()[QString('contents')].toString()) for i in xrange(COUNT_PROC)]
 	return procData
 
 class plasmaCpuFreqUtility(plasmascript.Applet):
@@ -258,9 +258,12 @@ class ControlWidget(Plasma.Dialog):
 			self.layout.addWidget(self.cpuLabel[i], 1 + i, 0)
 
 			self.cpuEnable[i] = QCheckBox()
-			if i != 0 :
+			if i != 0 and i in self.ProcData['online']:
 				enabled = int(self.ProcData['online'][i].data()[QString('contents')].toString().replace('\n', ''))
-				#print enabled, i, ' -- ???'
+				print enabled, i, ' -- ???'
+			else :
+				enabled = 0
+				print enabled, i,'not in dict'
 			if i == 0 :
 				self.cpuEnable[i].setCheckState(Qt.Checked)
 				self.cpuEnable[i].setEnabled(False)
