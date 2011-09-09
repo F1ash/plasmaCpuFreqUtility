@@ -277,13 +277,15 @@ class ControlWidget(Plasma.Dialog):
 			self.layout.addWidget(self.cpuEnable[i], 1 + i, 1)
 
 			self.comboGovernorMenu[i] = QComboBox(self)
-			_availableGovernors = self.ProcData['availableGovernors'][i].data()[QString('contents')].toString().replace('\n', '')
-			availableGovernors = _availableGovernors.split(' ')
-			count = availableGovernors.count('')
-			if count > 0 : availableGovernors.removeAll('')
+			if i in self.ProcData['online'] :
+				_availableGovernors = self.ProcData['availableGovernors'][i].data()[QString('contents')].toString().replace('\n', '')
+			else : _availableGovernors = 'default'
+			availableGovernors = _availableGovernors.split(' ', QString.SkipEmptyParts)
 			availableGovernors.append('powersave')
 			availableGovernors.append('conservative')
-			currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
+			if i in self.ProcData['online'] :
+				currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
+			else : currentGovernor = 'default'
 			currGovernorIdx = availableGovernors.indexOf(currentGovernor)
 			availableGovernors.removeDuplicates()
 			for governor in availableGovernors :
@@ -296,35 +298,38 @@ class ControlWidget(Plasma.Dialog):
 			#print [currentGovernor], currGovernorIdx, [item for item in availableGovernors]
 			self.comboGovernorMenu[i].setCurrentIndex(currGovernorIdx)
 			self.comboGovernorMenu[i].setEditable(False)
-			#self.comboGovernorMenu[i].currentIndexChanged['const QString&'].connect(self.regimeDefined)
 			self.layout.addWidget(self.comboGovernorMenu[i], 1 + i, 2)
 
 			self.comboMinFreq[i] = QComboBox(self)
 			#self.comboMinFreq[i].setMinimumContentsLength(8)
-			_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
-			availableFreqs = _availableFreqs.split(' ')
-			count = availableFreqs.count('')
-			if count > 0 : availableFreqs.removeAll('')
+			if i in self.ProcData['online'] :
+				_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
+			else : _availableFreqs = ''
+			availableFreqs = _availableFreqs.split(' ', QString.SkipEmptyParts)
 			for j in availableFreqs :
 				if j == 'default' : continue
 				self.comboMinFreq[i].addItem(str(j)[:-3])
 			self.comboMinFreq[i].addItem('default')
-			currentMinFreq = self.ProcData['currentMinFreq'][i].data()[QString('contents')].toString().replace('\n', '')
+			if i in self.ProcData['online'] :
+				currentMinFreq = self.ProcData['currentMinFreq'][i].data()[QString('contents')].toString().replace('\n', '')
+			else : currentMinFreq = 'default'
 			currMinFreqIdx = availableFreqs.indexOf(currentMinFreq)
 			self.comboMinFreq[i].setCurrentIndex(currMinFreqIdx)
 			self.layout.addWidget(self.comboMinFreq[i], 1 + i, 3)
 
 			self.comboMaxFreq[i] = QComboBox(self)
 			#self.comboMaxFreq[i].setMinimumContentsLength(8)
-			_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
-			availableFreqs = _availableFreqs.split(' ')
-			count = availableFreqs.count('')
-			if count > 0 : availableFreqs.removeAll('')
+			if i in self.ProcData['online'] :
+				_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
+			else : _availableFreqs = ''
+			availableFreqs = _availableFreqs.split(' ', QString.SkipEmptyParts)
 			for j in availableFreqs :
 				if j == 'default' : continue
 				self.comboMaxFreq[i].addItem(str(j)[:-3])
 			self.comboMaxFreq[i].addItem('default')
-			currentMaxFreq = self.ProcData['currentMaxFreq'][i].data()[QString('contents')].toString().replace('\n', '')
+			if i in self.ProcData['online'] :
+				currentMaxFreq = self.ProcData['currentMaxFreq'][i].data()[QString('contents')].toString().replace('\n', '')
+			else : currentMaxFreq = 'default'
 			currMaxFreqIdx = availableFreqs.indexOf(currentMaxFreq)
 			self.comboMaxFreq[i].setCurrentIndex(currMaxFreqIdx)
 			self.layout.addWidget(self.comboMaxFreq[i], 1 + i, 4)
