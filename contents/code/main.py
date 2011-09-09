@@ -97,7 +97,7 @@ def define_proc_data():
 	""" WARNING : /sys/devices/system/cpu/cpu0/online not exist anyway """
 	procData['online'] = {}
 	for i in present : procData['online'][int(i)] = readCpuData(str(i), 'online')
-	print [(i, procData['online'][i].data()[QString('contents')].toString()) for i in xrange(COUNT_PROC)]
+	print [(i, procData['online'][int(i)].data()[QString('contents')].toString()) for i in present]
 	return procData
 
 class plasmaCpuFreqUtility(plasmascript.Applet):
@@ -258,12 +258,12 @@ class ControlWidget(Plasma.Dialog):
 			self.layout.addWidget(self.cpuLabel[i], 1 + i, 0)
 
 			self.cpuEnable[i] = QCheckBox()
-			if i != 0 and i in self.ProcData['online']:
+			if i != 0 and i in self.ProcData['online'] :
 				enabled = int(self.ProcData['online'][i].data()[QString('contents')].toString().replace('\n', ''))
-				print enabled, i, ' -- ???'
+				print enabled, i, ' enabled'
 			else :
 				enabled = 0
-				print enabled, i,'not in dict'
+				if i != 0 : print enabled, i, 'disable in BIOS'
 			if i == 0 :
 				self.cpuEnable[i].setCheckState(Qt.Checked)
 				self.cpuEnable[i].setEnabled(False)
@@ -272,6 +272,8 @@ class ControlWidget(Plasma.Dialog):
 					self.cpuEnable[i].setCheckState(Qt.Checked)
 				if enabled == 0 :
 					self.cpuEnable[i].setCheckState(Qt.Unchecked)
+				if not i in self.ProcData['online'] :
+					self.cpuEnable[i].setEnabled(False)
 			self.layout.addWidget(self.cpuEnable[i], 1 + i, 1)
 
 			self.comboGovernorMenu[i] = QComboBox(self)
