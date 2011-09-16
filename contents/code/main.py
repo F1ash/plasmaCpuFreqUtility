@@ -74,7 +74,7 @@ def define_proc_data():
 	count = _count.data()[QString('contents')].toString().replace('\n', '').split('-')
 	_present = readCpuData('null', 'present')
 	present = _present.data()[QString('contents')].toString().replace('\n', '').split('-')
-	print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
+	#print len(count), COUNT_PROCESSOR, ":", [str(present[i]) for i in xrange(len(present))]
 	global COUNT_PROC
 	if _count.failed() or _present.failed() :
 		COUNT_PROC = 0
@@ -82,22 +82,21 @@ def define_proc_data():
 		return procData
 	COUNT_PROC = max(COUNT_PROCESSOR, len(count))
 	procData['count'] = COUNT_PROC
-	procData['availableFreqs'] = {int(i) : readCpuData(str(i), 'available_frequencies') for i in present}
+	procData['availableFreqs'] = {int(i) : readCpuData(str(i), 'available_frequencies') for i in xrange(COUNT_PROC)}
 	#print [procData['availableFreqs'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
-	procData['availableGovernors'] = {int(i) : readCpuData(str(i), 'available_governors') for i in present}
+	procData['availableGovernors'] = {int(i) : readCpuData(str(i), 'available_governors') for i in xrange(COUNT_PROC)}
 	#print [procData['availableGovernors'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
-	procData['currentFreq'] = {int(i) : readCpuData(str(i), 'cur_freq') for i in present}
+	procData['currentFreq'] = {int(i) : readCpuData(str(i), 'cur_freq') for i in xrange(COUNT_PROC)}
 	#print [procData['currentFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
-	procData['currentGovernor'] = {int(i) : readCpuData(str(i), 'governor') for i in present}
+	procData['currentGovernor'] = {int(i) : readCpuData(str(i), 'governor') for i in xrange(COUNT_PROC)}
 	#print [procData['currentGovernor'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
-	procData['currentMaxFreq'] = {int(i) : readCpuData(str(i), 'max_freq') for i in present}
+	procData['currentMaxFreq'] = {int(i) : readCpuData(str(i), 'max_freq') for i in xrange(COUNT_PROC)}
 	#print [procData['currentMaxFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
-	procData['currentMinFreq'] = {int(i) : readCpuData(str(i), 'min_freq') for i in present}
+	procData['currentMinFreq'] = {int(i) : readCpuData(str(i), 'min_freq') for i in xrange(COUNT_PROC)}
 	#print [procData['currentMinFreq'][i].data()[QString('contents')].toString() for i in xrange(COUNT_PROC)]
 	""" WARNING : /sys/devices/system/cpu/cpu0/online not exist anyway """
-	procData['online'] = {}
-	for i in present : procData['online'][int(i)] = readCpuData(str(i), 'online')
-	print [(i, procData['online'][int(i)].data()[QString('contents')].toString()) for i in present]
+	procData['online'] = {int(i) : readCpuData(str(i), 'online') for i in xrange(COUNT_PROC)}
+	#print [(i, procData['online'][int(i)].data()[QString('contents')].toString()) for i in xrange(COUNT_PROC)]
 	return procData
 
 class plasmaCpuFreqUtility(plasmascript.Applet):
@@ -123,6 +122,7 @@ class plasmaCpuFreqUtility(plasmascript.Applet):
 		self.layout.setSpacing(0)
 		self.icon = Plasma.IconWidget()
 		self.icon.setIcon(self.iconPath)
+		self.icon.setMinimumIconSize(QSizeF(24.0, 24.0))
 		self.icon.clicked.connect(self.mouseDoubleClickEvent)
 		self.layout.addItem(self.icon)
 		self.setLayout(self.layout)
@@ -260,11 +260,12 @@ class ControlWidget(Plasma.Dialog):
 			self.cpuEnable[i] = QCheckBox()
 			if i != 0 and i in self.ProcData['online'] :
 				enabled = int(self.ProcData['online'][i].data()[QString('contents')].toString().replace('\n', ''))
-				print enabled, i, ' enabled'
+				#print enabled, i, ' : online'
 			else :
 				enabled = 0
-				if i != 0 : print enabled, i, 'disable in BIOS'
+				if i != 0 : print enabled, i, 'disabled'
 			if i == 0 :
+				#print 1, i, ' : online'
 				self.cpuEnable[i].setCheckState(Qt.Checked)
 				self.cpuEnable[i].setEnabled(False)
 			else :
@@ -279,10 +280,11 @@ class ControlWidget(Plasma.Dialog):
 			self.comboGovernorMenu[i] = QComboBox(self)
 			if i in self.ProcData['online'] :
 				_availableGovernors = self.ProcData['availableGovernors'][i].data()[QString('contents')].toString().replace('\n', '')
-			else : _availableGovernors = 'default'
-			availableGovernors = _availableGovernors.split(' ', QString.SkipEmptyParts)
+			else : _availableGovernors = QString('default')
+			availableGovernors = QStringList(_availableGovernors.split(' ', QString.SkipEmptyParts))
 			availableGovernors.append('powersave')
 			availableGovernors.append('conservative')
+			#for item in availableGovernors : print '\t', item
 			if i in self.ProcData['online'] :
 				currentGovernor = self.ProcData['currentGovernor'][i].data()[QString('contents')].toString().replace('\n', '')
 			else : currentGovernor = 'default'
@@ -304,8 +306,9 @@ class ControlWidget(Plasma.Dialog):
 			#self.comboMinFreq[i].setMinimumContentsLength(8)
 			if i in self.ProcData['online'] :
 				_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
-			else : _availableFreqs = ''
-			availableFreqs = _availableFreqs.split(' ', QString.SkipEmptyParts)
+			else : _availableFreqs = QString('')
+			availableFreqs = QStringList(_availableFreqs.split(' ', QString.SkipEmptyParts))
+			#for item in availableFreqs : print '\t', item
 			for j in availableFreqs :
 				if j == 'default' : continue
 				self.comboMinFreq[i].addItem(str(j)[:-3])
@@ -321,8 +324,9 @@ class ControlWidget(Plasma.Dialog):
 			#self.comboMaxFreq[i].setMinimumContentsLength(8)
 			if i in self.ProcData['online'] :
 				_availableFreqs = self.ProcData['availableFreqs'][i].data()[QString('contents')].toString().replace('\n', '')
-			else : _availableFreqs = ''
-			availableFreqs = _availableFreqs.split(' ', QString.SkipEmptyParts)
+			else : _availableFreqs = QString('')
+			availableFreqs = QStringList(_availableFreqs.split(' ', QString.SkipEmptyParts))
+			#for item in availableFreqs : print '\t', item
 			for j in availableFreqs :
 				if j == 'default' : continue
 				self.comboMaxFreq[i].addItem(str(j)[:-3])
