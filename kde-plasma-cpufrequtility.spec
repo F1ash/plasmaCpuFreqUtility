@@ -1,8 +1,8 @@
 %define cmake_build_dir build-cmake
 
 Name: kde-plasma-cpufrequtility
-Version: 1.4.1
-Release: 2%{?dist}
+Version: 1.5
+Release: 3%{?dist}
 Summary: CPU Frequence Utility plasmoid.
 Summary(ru): Плазмоид для управления режимом работы процессора.
 Group: Applications/Utility
@@ -11,7 +11,7 @@ Source0: http://cloud.github.com/downloads/F1ash/plasmaCpuFreqUtility/%{name}-%{
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 URL: https://github.com/F1ash/plasmaCpuFreqUtility
 
-Requires: python, PyQt4, PyKDE4
+Requires: python, PyQt4, PyKDE4, dbus, polkit
 BuildRequires: gcc-c++ kdelibs-devel
 
 %description
@@ -53,13 +53,17 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Wed Aug 31 2011 <kaperang07@gmail.com> - 1.4.1-2
+* Tue Sep 27 2011 Fl@sh <kaperang07@gmail.com> - 1.5-3
+- added dbus, polkit requires in spec
+- final fixes
+
+* Wed Aug 31 2011 Fl@sh <kaperang07@gmail.com> - 1.4.1-2
 - fixed cpu info store to dict
 
-* Mon Aug 29 2011 <kaperang07@gmail.com> - 1.4-2
+* Mon Aug 29 2011 Fl@sh <kaperang07@gmail.com> - 1.4-2
 - some fixes in kde-plasma-cpufrequtility.spec
 
-* Mon Aug 29 2011 <kaperang07@gmail.com> - 1.4-1
+* Mon Aug 29 2011 Fl@sh <kaperang07@gmail.com> - 1.4-1
 - added color settings
 
 * Mon Aug 22 2011 Fl@sh <kaperang07@gmail.com> - 1.3-1
