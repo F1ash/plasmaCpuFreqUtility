@@ -2,7 +2,7 @@
 
 Name: kde-plasma-cpufrequtility
 Version: 1.5
-Release: 3%{?dist}
+Release: 3%{?dist}.R
 Summary: CPU Frequence Utility plasmoid.
 Summary(ru): Плазмоид для управления режимом работы процессора.
 Group: Applications/Utility
