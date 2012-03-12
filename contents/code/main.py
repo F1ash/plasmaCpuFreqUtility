@@ -228,6 +228,15 @@ class ControlWidget(Plasma.Dialog):
 		else :
 			self.rememberBox.setCheckState(Qt.Unchecked)
 
+		self.firstForAllBox = QCheckBox()
+		self.firstForAllBox.setToolTip('FirstForAll')
+		enabled = self.prnt.Settings.value('FirstForAll', 0).toInt()[0]
+		if bool(enabled) :
+			self.firstForAllBox.setCheckState(Qt.Checked)
+		else :
+			self.firstForAllBox.setCheckState(Qt.Unchecked)
+		self.firstForAllBox.stateChanged.connect(self.changeControlMode)
+
 		self.accept = QPushButton()
 		self.accept.setText('Apply')
 		self.accept.clicked.connect(self.changeRegime)
@@ -243,7 +252,8 @@ class ControlWidget(Plasma.Dialog):
 		self.minLabel = QLabel('<font color=' + self.prnt.colorSelect.minFreqColor + '>MinFreq</font>')
 		self.maxLabel = QLabel('<font color=' + self.prnt.colorSelect.maxFreqColor + '>MaxFreq</font>')
 
-		self.layout.addWidget(self.rememberBox, 0, 1, Qt.AlignCenter)
+		self.layout.addWidget(self.rememberBox, 0, 0, Qt.AlignCenter)
+		self.layout.addWidget(self.firstForAllBox, 0, 1, Qt.AlignCenter)
 		self.layout.addItem(self.buttonPanel, 0, 2)
 		self.layout.addWidget(self.minLabel, 0, 3, Qt.AlignCenter)
 		self.layout.addWidget(self.maxLabel, 0, 4, Qt.AlignCenter)
@@ -338,7 +348,38 @@ class ControlWidget(Plasma.Dialog):
 			self.comboMaxFreq[i].setCurrentIndex(currMaxFreqIdx)
 			self.layout.addWidget(self.comboMaxFreq[i], 1 + i, 4)
 
+		self.changeControlMode(self.firstForAllBox.checkState())
+
 		self.setLayout(self.layout)
+
+	def changeControlMode(self, value):
+		try :
+			if self.firstForAllBox.checkState() == Qt.Checked :
+				self.comboGovernorMenu[0].currentIndexChanged[int].connect(self.governorModeHelper)
+				self.comboMinFreq[0].currentIndexChanged[int].connect(self.minFreqModeHelper)
+				self.comboMaxFreq[0].currentIndexChanged[int].connect(self.maxFreqModeHelper)
+			else :
+				self.comboGovernorMenu[0].currentIndexChanged[int].disconnect(self.governorModeHelper)
+				self.comboMinFreq[0].currentIndexChanged[int].disconnect(self.minFreqModeHelper)
+				self.comboMaxFreq[0].currentIndexChanged[int].disconnect(self.maxFreqModeHelper)
+		except Exception, err :
+			print err
+		finally : pass
+
+	def governorModeHelper(self, value):
+		self.modeHelper(self.comboGovernorMenu, value)
+
+	def minFreqModeHelper(self, value):
+		self.modeHelper(self.comboMinFreq, value)
+
+	def maxFreqModeHelper(self, value):
+		self.modeHelper(self.comboMaxFreq, value)
+
+	def modeHelper(self, obj, value):
+		i = 0
+		while i < COUNT_PROC :
+			if i > 0 : obj[i].setCurrentIndex(value)
+			i += 1
 
 	def getNewProcParemeters(self):
 		newParameters = {}
@@ -394,6 +435,7 @@ class ControlWidget(Plasma.Dialog):
 			else :
 				self.prnt.Settings.setValue('Remember', 0)
 				self.prnt.Settings.setValue('Parameters', '')
+			self.prnt.Settings.setValue('FirstForAll', self.firstForAllBox.checkState() / 2)
 			self.prnt.Settings.sync()
 		self.prnt.parametersReset()
 
